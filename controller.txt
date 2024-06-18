@@ -1,0 +1,28 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../config/db');
+
+exports.register = (req, res) => {
+    const { username, email, password } = req.body;
+    const hashedPassword = bcrypt.hashSync(password, 8);
+
+    db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword], (err, result) => {
+        if (err) return res.status(500).send('Error on the server.');
+        res.status(200).send({ auth: true });
+    });
+};
+
+exports.login = (req, res) => {
+    const { email, password } = req.body;
+
+    db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
+        if (err) return res.status(500).send('Error on the server.');
+        if (!results.length) return res.status(404).send('No user found.');
+
+        const passwordIsValid = bcrypt.compareSync(password, results[0].password);
+        if (!passwordIsValid) return res.status(401).send({ auth: false, token: null });
+
+        const token = jwt.sign({ id: results[0].id }, 'supersecret', { expiresIn: 86400 });
+        res.status(200).send({ auth: true, token: token });
+    });
+};

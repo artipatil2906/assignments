@@ -1,0 +1,16 @@
+const db = require('../config/db');
+
+exports.getAllProducts = (req, res) => {
+    db.query('SELECT * FROM products', (err, results) => {
+        if (err) return res.status(500).send('Error on the server.');
+        res.status(200).send(results);
+    });
+};
+
+exports.addProduct = (req, res) => {
+    const { pname, description, price, stock, categoryid } = req.body;
+    db.query('INSERT INTO products (pname, description, price, stock, categoryid) VALUES (?, ?, ?, ?, ?)', [pname, description, price, stock, categoryid], (err, result) => {
+        if (err) return res.status(500).send('Error on the server.');
+        res.status(200).send(result);
+    });
+};
